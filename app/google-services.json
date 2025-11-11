@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "58110277525",
+    "project_id": "personal-finance-forecast",
+    "storage_bucket": "personal-finance-forecast.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:58110277525:android:4721ad2bf2ea60250a289c",
+        "android_client_info": {
+          "package_name": "com.yempe.financeapps.basicconverter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMa8kGhZI7WMlr_WLMxRbJogKKipVq490"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:58110277525:android:03c94e3c504b92640a289c",
+        "android_client_info": {
+          "package_name": "com.yempe.personalfinanceforecast"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMa8kGhZI7WMlr_WLMxRbJogKKipVq490"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
