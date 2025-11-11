@@ -56,6 +56,9 @@ dependencies {
     implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.viewmodel)
 
+    // Timber
+    implementation(libs.timber.log)
+
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
     implementation(libs.material)

@@ -12,15 +12,16 @@ import com.yempe.financeapps.feature.converter.presenter.model.AssetListUIModel
 import com.yempe.financeapps.feature.settings.api.SettingsModuleApi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
@@ -33,7 +34,7 @@ class AssetListScreenViewModel @Inject constructor(
     private val observeConvertedRatesUseCase: ObserveConvertedRatesUseCase,
     private val updateAssetFavoriteState: UpdateAssetFavoriteStateUseCase,
     private val settingsModuleApi: SettingsModuleApi
-) : BaseViewModel<AssetListScreenState, AssetListNavigationEvent, AssetListScreenUIIntent>(
+) : BaseViewModel<AssetListScreenState, Unit, AssetListUIEvent>(
     initialState = AssetListScreenState()
 ) {
     val uiModel: StateFlow<AssetListUIModel> = state
@@ -80,7 +81,18 @@ class AssetListScreenViewModel @Inject constructor(
     }
 
     private fun updateAssetFavoriteState(assetCode: String) {
-        launchAll { updateAssetFavoriteState.invoke(assetCode) }
+        launchAll {
+            val favState = updateAssetFavoriteState.invoke(assetCode)
+            postEvent(
+                AssetListUIEvent.ShowToast(
+                    if (favState) {
+                        "Added to favorites"
+                    } else {
+                        "Removed from favorites "
+                    }
+                )
+            )
+        }
     }
 
     private fun observeAndUpdateAvailableAssets() {
@@ -99,18 +111,20 @@ class AssetListScreenViewModel @Inject constructor(
                         state.copy(
                             assetList = assets,
                             baseCurrency = initialBaseCurrency,
-                            convertAmount = if (initialBaseCurrency != state.baseCurrency) 0.0 else state.convertAmount
+                            convertAmount = if (initialBaseCurrency != state.baseCurrency) 0.0
+                            else state.convertAmount
                         )
                     }
                 }
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     private fun observeConvertedAmounts() {
         launchAll {
             state.map { it.baseCurrency to it.convertAmount }
                 .distinctUntilChanged()
+                .debounce(300L)
                 .flatMapLatest { (baseCurrency, convertAmount) ->
                     if (baseCurrency != null && convertAmount != null) {
                         observeConvertedRatesUseCase(
@@ -124,7 +138,6 @@ class AssetListScreenViewModel @Inject constructor(
                     }
                 }
                 .filter { it.isNotEmpty() }
-                .onEach { println("streamConvertedAmounts > $it") }
                 .collectLatest { convertedAmounts ->
                     updateState { currentState ->
                         currentState.copy(convertedAmounts = convertedAmounts)

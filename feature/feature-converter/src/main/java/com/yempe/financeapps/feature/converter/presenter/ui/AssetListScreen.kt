@@ -1,5 +1,6 @@
 package com.yempe.financeapps.feature.converter.presenter.ui
 
+import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -55,6 +56,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -69,6 +71,7 @@ import com.yempe.financeapps.core.presentation.R
 import com.yempe.financeapps.feature.converter.presenter.intent.AssetListScreenUIIntent
 import com.yempe.financeapps.feature.converter.presenter.model.AssetListUIItemModel
 import com.yempe.financeapps.feature.converter.presenter.mvi.AssetListScreenViewModel
+import com.yempe.financeapps.feature.converter.presenter.mvi.AssetListUIEvent
 
 @Composable
 fun AssetListScreen(
@@ -76,6 +79,17 @@ fun AssetListScreen(
 ) {
     val state by viewModel.uiModel.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = true) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is AssetListUIEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -226,6 +240,13 @@ fun AssetItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .then(
+                    other = if (item.isBaseCurrency) {
+                        modifier.background(
+                            color = Color(0x2000B500)
+                        )
+                    } else modifier
+                )
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically

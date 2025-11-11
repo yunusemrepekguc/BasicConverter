@@ -7,7 +7,7 @@ class UpdateAssetFavoriteStateUseCase @Inject constructor(
     private val assetRepository: AssetRepository
 ) {
 
-    suspend operator fun invoke(assetCode: String) {
-        assetRepository.updateAssetFavoriteState(assetCode)
+    suspend operator fun invoke(assetCode: String): Boolean {
+        return assetRepository.updateAssetFavoriteState(assetCode)
     }
 }

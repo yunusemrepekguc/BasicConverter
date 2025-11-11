@@ -15,5 +15,6 @@ data class AssetListUIItemModel(
     val convertedAmount: String,
     val baseRate: String,
     val isFavorite: Boolean,
+    val isBaseCurrency: Boolean,
     @DrawableRes val assetImage: Int
 )

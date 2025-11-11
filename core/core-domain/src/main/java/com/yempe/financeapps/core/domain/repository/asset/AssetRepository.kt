@@ -8,7 +8,7 @@ interface AssetRepository {
 
     suspend fun refreshAvailableAssets()
 
-    suspend fun updateAssetFavoriteState(assetCode: String)
+    suspend fun updateAssetFavoriteState(assetCode: String): Boolean
 
     fun observeAvailableAssets(): Flow<List<AssetModel>>
 

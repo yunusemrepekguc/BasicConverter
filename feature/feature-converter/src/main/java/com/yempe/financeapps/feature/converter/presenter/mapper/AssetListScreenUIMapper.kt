@@ -28,8 +28,8 @@ class AssetListScreenUIMapper @Inject constructor() {
                 ) ?: "",
                 assetImage = asset.getAssetImage(),
                 isFavorite = asset.isFavorite,
-
-                )
+                isBaseCurrency = asset.code == state.baseCurrency
+            )
         }
 
         return AssetListUIModel(

@@ -35,6 +35,7 @@ dependencies {
     //room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.test.core.ktx)
     ksp(libs.room.compiler)
 
     //coroutine
@@ -47,7 +48,15 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
     implementation(libs.material)
+
+    // test
     testImplementation(libs.junit)
+    testImplementation(libs.mockito)
+    testImplementation(libs.coroutines.test)
+    testImplementation(kotlin("test"))
+
+    //android test
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.room.testing)
 }

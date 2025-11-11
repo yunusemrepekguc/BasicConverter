@@ -10,9 +10,11 @@ import com.yempe.financeapps.feature.converter.data.remote.AssetApi
 import jakarta.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 
 class AssetRepositoryImpl @Inject constructor(
     private val assetMapper: AssetMapper,
@@ -38,9 +40,10 @@ class AssetRepositoryImpl @Inject constructor(
     }
 
 
-    override suspend fun updateAssetFavoriteState(assetCode: String) {
+    override suspend fun updateAssetFavoriteState(assetCode: String): Boolean {
         val asset = assetDao.getAssetByCode(assetCode)
         assetDao.updateAssetFavoriteState(assetCode, isFavorite = asset.isFavorite.not())
+        return asset.isFavorite.not()
     }
 
     override fun observeAvailableAssets(): Flow<List<AssetModel>> {
@@ -49,7 +52,7 @@ class AssetRepositoryImpl @Inject constructor(
                 entities
                     .map(transform = assetMapper::entityToDomainModel)
                     .sortedByDescending { it.isFavorite }
-            }
+            }.catch { Timber.e(t = it) }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -64,6 +67,6 @@ class AssetRepositoryImpl @Inject constructor(
                     baseCode = baseCode,
                     inputAmount = inputAmount
                 )
-            }
+            }.catch { Timber.e(t = it) }
     }
 }

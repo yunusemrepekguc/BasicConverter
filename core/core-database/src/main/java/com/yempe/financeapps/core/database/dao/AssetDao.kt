@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.yempe.financeapps.core.database.entity.AssetEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -28,6 +29,9 @@ interface AssetDao {
     //Update
     @Query("UPDATE ASSET SET is_favorite = :isFavorite WHERE code = :assetCode")
     fun updateAssetFavoriteState(assetCode: String, isFavorite: Boolean)
+
+    @Update
+    fun updateAsset(assetEntity: AssetEntity)
 
     //Delete
     @Delete
