@@ -1,5 +1,6 @@
 package com.yempe.financeapps.feature.setting.presentation.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,20 +36,54 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.yempe.financeapps.feature.setting.R
 import com.yempe.financeapps.feature.setting.presentation.intent.SettingScreenUIIntent
+import com.yempe.financeapps.feature.setting.presentation.model.SettingsScreenUIModel
+import com.yempe.financeapps.feature.setting.presentation.mvi.SettingsScreenUIEvent
 import com.yempe.financeapps.feature.setting.presentation.mvi.SettingsScreenViewModel
+import com.yempe.financeapps.feature.setting.presentation.ui.preview.PreviewData
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsScreenViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    LaunchedEffect(key1 = true) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is SettingsScreenUIEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    ScreenContent(
+        uiState = uiState,
+        onMaxDigitIncrease = {
+            viewModel.onIntent(SettingScreenUIIntent.OnMaxDigitIncrease)
+        },
+        onMaxDigitDecrease = {
+            viewModel.onIntent(SettingScreenUIIntent.OnMaxDigitDecrease)
+        }
+    )
+}
+
+@Composable
+private fun ScreenContent(
+    uiState: SettingsScreenUIModel,
+    onMaxDigitIncrease: () -> Unit,
+    onMaxDigitDecrease: () -> Unit
+) {
+
     var maxDecimalDigits by remember { mutableIntStateOf(2) }
 
     LaunchedEffect(uiState.currentDecimalCount) {
@@ -152,7 +187,7 @@ fun SettingsScreen(
                                         )
                                     )
                                     .clickable(enabled = maxDecimalDigits > 0) {
-                                        viewModel.onIntent(SettingScreenUIIntent.OnMaxDigitDecrease)
+                                        onMaxDigitDecrease()
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -194,7 +229,7 @@ fun SettingsScreen(
                                         )
                                     )
                                     .clickable(enabled = maxDecimalDigits < 6) {
-                                        viewModel.onIntent(SettingScreenUIIntent.OnMaxDigitIncrease)
+                                        onMaxDigitIncrease()
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -246,4 +281,14 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+@Composable
+@Preview
+private fun Preview() {
+    ScreenContent(
+        uiState = PreviewData.getSettingsScreenUIModel(),
+        onMaxDigitIncrease = {},
+        onMaxDigitDecrease = {}
+    )
 }

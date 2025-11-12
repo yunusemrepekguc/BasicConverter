@@ -27,14 +27,4 @@ class CommonDataMapper @Inject constructor() {
         return dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
 
-    inline fun <reified T : Enum<T>> stringToEnum(value: String?): T? {
-        return try {
-            value?.let { enumValueOf<T>(it) }
-        } catch (e: IllegalArgumentException) {
-            null
-        }
-    }
-
-    fun <T : Enum<T>> enumToString(value: T): String = value.name
-
 }

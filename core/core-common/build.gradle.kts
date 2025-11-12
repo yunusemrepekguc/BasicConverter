@@ -6,27 +6,20 @@ plugins {
 
 android {
     namespace = "com.yempe.financeapps.core.common"
-    compileSdk = AndroidConfig.COMPILE_SDK
+    compileSdk = ProjectConfig.COMPILE_SDK
 
     defaultConfig {
-        minSdk = AndroidConfig.MIN_SDK
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-        }
+        minSdk = ProjectConfig.MIN_SDK
+        testInstrumentationRunner = ProjectConfig.TEST_INSTRUMENTATION_RUNNER
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = ProjectConfig.JVM_TARGET
     }
 }
 

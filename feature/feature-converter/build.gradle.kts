@@ -7,25 +7,19 @@ plugins {
 
 android {
     namespace = "com.yempe.financeapps.feature.converter"
-    compileSdk = 36
+    compileSdk = ProjectConfig.COMPILE_SDK
 
     defaultConfig {
-        minSdk = 26
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        minSdk = ProjectConfig.MIN_SDK
+        testInstrumentationRunner = ProjectConfig.TEST_INSTRUMENTATION_RUNNER
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-        }
-    }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = ProjectConfig.JVM_TARGET
     }
 
 }
@@ -36,6 +30,8 @@ dependencies {
     implementation(project(":core:core-database"))
     implementation(project(":core:core-network"))
     implementation(project(":core:core-presentation"))
+    implementation(project(":core:core-navigation"))
+
     implementation(project(":feature:feature-settings-api"))
 
     // hilt
@@ -59,10 +55,14 @@ dependencies {
     // Timber
     implementation(libs.timber.log)
 
+    // Serialization
+    implementation(libs.kotlin.serialization.json)
+
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
     implementation(libs.material)
     testImplementation(libs.junit)
+    testImplementation(libs.mockito)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }

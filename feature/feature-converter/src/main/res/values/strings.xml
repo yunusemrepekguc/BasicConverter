@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="text_currency_converter">Currency Converter</string>
+    <string name="msg_added_to_favorites">Added to favourites</string>
+    <string name="msg_removed_from_favorites">Removed from favourites</string>
 </resources>

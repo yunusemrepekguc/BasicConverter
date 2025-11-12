@@ -8,36 +8,40 @@ plugins {
 }
 
 android {
-    namespace = "com.yempe.financeapps.basicconverter"
-    compileSdk = 36
+    namespace = ProjectConfig.APPLICATION_ID
+    compileSdk = ProjectConfig.COMPILE_SDK
 
     defaultConfig {
-        applicationId = "com.yempe.financeapps.basicconverter"
-        minSdk = 26
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        applicationId = ProjectConfig.APPLICATION_ID
+        minSdk = ProjectConfig.MIN_SDK
+        targetSdk = ProjectConfig.TARGET_SDK
+        versionCode = ProjectConfig.VERSION_CODE
+        versionName = ProjectConfig.VERSION_NAME
+        testInstrumentationRunner = ProjectConfig.TEST_INSTRUMENTATION_RUNNER
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+
+        debug {
+            isMinifyEnabled = false
+        }
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = ProjectConfig.JVM_TARGET
     }
 
     buildFeatures {

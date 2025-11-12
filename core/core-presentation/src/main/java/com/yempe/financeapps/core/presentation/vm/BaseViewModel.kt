@@ -20,7 +20,7 @@ open class BaseViewModel<State, NavigationEvent, UIEvent>(val initialState: Stat
     private val _state = MutableStateFlow(value = initialState)
     protected val state: StateFlow<State> = _state.asStateFlow()
 
-    private val _navigationEvent = MutableSharedFlow<NavigationEvent>(replay = 1)
+    private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
     val navigationEvent: SharedFlow<NavigationEvent> = _navigationEvent.asSharedFlow()
 
     private val _uiEvent = MutableSharedFlow<UIEvent>()

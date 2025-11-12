@@ -6,6 +6,7 @@ import com.yempe.financeapps.core.domain.model.AssetModel
 
 data class AssetListScreenState(
     val isLoading: Boolean = false,
+    val error: Boolean = false,
     val baseCurrency: String? = null,
     val convertAmount: Double? = null,
     val maxDecimalDigit: Int = ConverterConstants.DEFAULT_MAX_DECIMAL,

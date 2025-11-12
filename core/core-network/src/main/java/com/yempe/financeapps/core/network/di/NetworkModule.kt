@@ -5,8 +5,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -46,15 +44,5 @@ internal object NetworkModule {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideKtorClient(): HttpClient {
-        return HttpClient(CIO) {
-            install(io.ktor.client.plugins.logging.Logging) {
-                level = io.ktor.client.plugins.logging.LogLevel.BODY
-            }
-        }
     }
 }

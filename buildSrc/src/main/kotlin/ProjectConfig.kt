@@ -1,4 +1,4 @@
-object AndroidConfig {
+object ProjectConfig {
 
     const val COMPILE_SDK = 36
     const val MIN_SDK = 26
@@ -7,4 +7,5 @@ object AndroidConfig {
     const val VERSION_NAME = "1.0.0"
     const val APPLICATION_ID = "com.yempe.financeapps.basicconverter"
     const val TEST_INSTRUMENTATION_RUNNER = "androidx.test.runner.AndroidJUnitRunner"
+    const val JVM_TARGET = "17"
 }

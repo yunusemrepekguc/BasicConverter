@@ -17,7 +17,7 @@ class MockAssetInterceptor : Interceptor {
                     chain,
                     json = """
 [
-    { "code": "TRY", "name": "Turkish Lira", "symbol": "₺" },
+    { "code": "TRY", "name": "Turkish Lira", "symbol": "₺", "isFavorite" : true },
     { "code": "USD", "name": "US Dollar", "symbol": "$" },
     { "code": "EUR", "name": "Euro", "symbol": "€" },
     { "code": "GBP", "name": "Pound", "symbol": "£" },

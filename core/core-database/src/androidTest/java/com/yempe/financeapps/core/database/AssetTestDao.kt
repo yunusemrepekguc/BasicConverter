@@ -12,7 +12,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-class AssetTestDao {
+class AssetTestDao { // ANDROID TEST
 
     private lateinit var database: ConverterDatabase
     private lateinit var dao: AssetDao

@@ -1,14 +1,11 @@
 package com.yempe.financeapps.feature.converter.data.mapper
 
-import com.yempe.financeapps.core.common.mapper.CommonDataMapper
 import com.yempe.financeapps.core.database.entity.AssetEntity
 import com.yempe.financeapps.core.domain.model.AssetModel
 import com.yempe.financeapps.feature.converter.data.model.AssetModelDto
 import javax.inject.Inject
 
-class AssetMapper @Inject constructor(
-    private val commonDataMapper: CommonDataMapper
-) {
+class AssetMapper @Inject constructor() {
 
     fun entityToDomainModel(assetEntity: AssetEntity): AssetModel {
         return AssetModel(
@@ -24,7 +21,7 @@ class AssetMapper @Inject constructor(
             code = dto.code,
             name = dto.name,
             symbol = dto.symbol,
-            isFavorite = false // initially false
+            isFavorite = dto.isFavorite // initially false
         )
     }
 

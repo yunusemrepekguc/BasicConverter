@@ -1,6 +1,7 @@
 package com.yempe.financeapps.feature.converter.domain.usecase
 
 import com.yempe.financeapps.core.domain.model.AssetConvertedAmount
+import com.yempe.financeapps.core.domain.model.ResultWrapper
 import com.yempe.financeapps.core.domain.repository.asset.AssetRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -14,7 +15,7 @@ class ObserveConvertedRatesUseCase @Inject constructor(
         val inputAmount: Double
     )
 
-    operator fun invoke(param: Param): Flow<List<AssetConvertedAmount>> {
+    operator fun invoke(param: Param): Flow<ResultWrapper<List<AssetConvertedAmount>>> {
         return assetRepository.streamConvertedAmounts(
             baseCode = param.baseCode,
             inputAmount = param.inputAmount

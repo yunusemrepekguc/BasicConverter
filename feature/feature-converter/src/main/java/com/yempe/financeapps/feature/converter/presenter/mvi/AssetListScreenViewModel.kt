@@ -1,7 +1,12 @@
 package com.yempe.financeapps.feature.converter.presenter.mvi
 
 import androidx.lifecycle.viewModelScope
+import com.yempe.financeapps.core.domain.model.ResultWrapper
+import com.yempe.financeapps.core.domain.util.onError
+import com.yempe.financeapps.core.domain.util.onLoading
+import com.yempe.financeapps.core.domain.util.onSuccess
 import com.yempe.financeapps.core.presentation.vm.BaseViewModel
+import com.yempe.financeapps.feature.converter.R
 import com.yempe.financeapps.feature.converter.domain.usecase.ObserveAvailableAssetsUseCase
 import com.yempe.financeapps.feature.converter.domain.usecase.ObserveConvertedRatesUseCase
 import com.yempe.financeapps.feature.converter.domain.usecase.RefreshAvailableAssetsUseCase
@@ -15,15 +20,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,7 +38,7 @@ class AssetListScreenViewModel @Inject constructor(
     private val refreshAvailableAssetsUseCase: RefreshAvailableAssetsUseCase,
     private val observeAvailableAssetsUseCase: ObserveAvailableAssetsUseCase,
     private val observeConvertedRatesUseCase: ObserveConvertedRatesUseCase,
-    private val updateAssetFavoriteState: UpdateAssetFavoriteStateUseCase,
+    private val updateAssetFavoriteStateUseCase: UpdateAssetFavoriteStateUseCase,
     private val settingsModuleApi: SettingsModuleApi
 ) : BaseViewModel<AssetListScreenState, Unit, AssetListUIEvent>(
     initialState = AssetListScreenState()
@@ -65,6 +71,7 @@ class AssetListScreenViewModel @Inject constructor(
                     assetCode = intent.assetCode
                 )
             }
+
         }
     }
 
@@ -82,16 +89,22 @@ class AssetListScreenViewModel @Inject constructor(
 
     private fun updateAssetFavoriteState(assetCode: String) {
         launchAll {
-            val favState = updateAssetFavoriteState.invoke(assetCode)
-            postEvent(
-                AssetListUIEvent.ShowToast(
-                    if (favState) {
-                        "Added to favorites"
-                    } else {
-                        "Removed from favorites "
-                    }
+            val favState = updateAssetFavoriteStateUseCase(assetCode)
+            favState.onSuccess { state ->
+                postEvent(
+                    event = AssetListUIEvent.ShowToastWithResId(
+                        message = if (state) {
+                            R.string.msg_added_to_favorites
+                        } else {
+                            R.string.msg_removed_from_favorites
+                        }
+                    )
                 )
-            )
+            }.onError { ex, msg ->
+                postEvent(
+                    event = AssetListUIEvent.ShowToast(message = msg.toString())
+                )
+            }
         }
     }
 
@@ -99,22 +112,34 @@ class AssetListScreenViewModel @Inject constructor(
         launchAll {
             observeAvailableAssetsUseCase()
                 .onStart { refreshAvailableAssetsUseCase() }
-                .collect { assets ->
-                    updateState { state ->
-                        val initialBaseCurrency =
-                            if (state.baseCurrency.isNullOrEmpty() || state.convertAmount != null) {
-                                assets.firstOrNull()?.code
-                            } else {
-                                state.baseCurrency
-                            }
+                .catch { Timber.e(it) }
+                .collect { result ->
+                    result
+                        .onLoading {
+                            updateState { it.copy(isLoading = true) }
+                        }
+                        .onSuccess { assets ->
+                            updateState { state ->
+                                val initialBaseCurrency =
+                                    if (state.baseCurrency.isNullOrEmpty() || state.convertAmount != null) {
+                                        assets.firstOrNull()?.code
+                                    } else {
+                                        state.baseCurrency
+                                    }
 
-                        state.copy(
-                            assetList = assets,
-                            baseCurrency = initialBaseCurrency,
-                            convertAmount = if (initialBaseCurrency != state.baseCurrency) 0.0
-                            else state.convertAmount
-                        )
-                    }
+                                state.copy(
+                                    isLoading = false,
+                                    assetList = assets,
+                                    baseCurrency = initialBaseCurrency,
+                                    convertAmount = if (initialBaseCurrency != state.baseCurrency) 0.0
+                                    else state.convertAmount
+                                )
+                            }
+                        }
+                        .onError { ex, mes ->
+                            updateState { it.copy(isLoading = false) }
+                            postEvent(AssetListUIEvent.ShowToast(mes.toString()))
+                        }
                 }
         }
     }
@@ -134,13 +159,22 @@ class AssetListScreenViewModel @Inject constructor(
                             )
                         )
                     } else {
-                        flowOf(emptyList())
+                        flowOf(value = ResultWrapper.Success(emptyList()))
                     }
                 }
-                .filter { it.isNotEmpty() }
-                .collectLatest { convertedAmounts ->
-                    updateState { currentState ->
-                        currentState.copy(convertedAmounts = convertedAmounts)
+                .collectLatest { result ->
+                    result.onSuccess { data ->
+                        if (data.isNotEmpty()) {
+                            updateState { currentState ->
+                                currentState.copy(
+                                    convertedAmounts = data,
+                                    isLoading = false,
+                                )
+                            }
+                        }
+                    }.onError { ex, msg ->
+                        updateState { it.copy(isLoading = false) }
+                        postEvent(AssetListUIEvent.ShowToast(message = msg.toString()))
                     }
                 }
         }
@@ -148,13 +182,17 @@ class AssetListScreenViewModel @Inject constructor(
 
     private fun observeMaxDecimalDigits() {
         launchAll {
-            settingsModuleApi.observeMaxDecimalDigits().collectLatest { maxDigits ->
-                updateState { state ->
-                    state.copy(
-                        maxDecimalDigit = maxDigits
-                    )
+            settingsModuleApi.observeMaxDecimalDigits()
+                .catch { Timber.e(it) }
+                .collectLatest { maxDigits ->
+                    maxDigits.onSuccess { data ->
+                        updateState { state ->
+                            state.copy(
+                                maxDecimalDigit = data
+                            )
+                        }
+                    }
                 }
-            }
         }
     }
 }

@@ -33,7 +33,7 @@ class AssetListScreenUIMapper @Inject constructor() {
         }
 
         return AssetListUIModel(
-            isLoading = state.isLoading,
+            isRefreshing = state.isLoading,
             listItems = items,
             maxDecimalDigit = state.maxDecimalDigit
         )

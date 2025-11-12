@@ -3,6 +3,7 @@ package com.yempe.financeapps.feature.converter.data.repository
 import com.yempe.financeapps.core.database.dao.AssetDao
 import com.yempe.financeapps.core.domain.model.AssetConvertedAmount
 import com.yempe.financeapps.core.domain.model.AssetModel
+import com.yempe.financeapps.core.domain.model.ResultWrapper
 import com.yempe.financeapps.core.domain.repository.asset.AssetRepository
 import com.yempe.financeapps.feature.converter.data.mapper.AssetMapper
 import com.yempe.financeapps.feature.converter.data.provider.MockConversionService
@@ -13,8 +14,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import timber.log.Timber
+import kotlinx.coroutines.flow.onStart
 
 class AssetRepositoryImpl @Inject constructor(
     private val assetMapper: AssetMapper,
@@ -23,50 +25,98 @@ class AssetRepositoryImpl @Inject constructor(
     private val mockConversionService: MockConversionService
 ) : AssetRepository {
 
-    override suspend fun refreshAvailableAssets() {
-        val remoteAssets = assetApi.getAssets()
-            .map(assetMapper::dtoToEntityModel)
+    override suspend fun refreshAvailableAssets(): ResultWrapper<Unit> {
+        return try {
+            val entityAssets = assetApi.getAssets()
+                .map(assetMapper::dtoToEntityModel)
 
-        val mergedAssets = remoteAssets.map { remote ->
-            val local = assetDao.getAllAssets().first().find { it.code == remote.code }
-            if (local != null) {
-                remote.copy(isFavorite = local.isFavorite)
-            } else {
-                remote
+            val mergedAssets = entityAssets.map { remote ->
+                val local = assetDao.getAllAssets().first().find { it.code == remote.code }
+                if (local != null) {
+                    remote.copy(isFavorite = local.isFavorite)
+                } else {
+                    remote
+                }
             }
+
+            assetDao.insertAssets(mergedAssets)
+            ResultWrapper.Success(Unit)
+        } catch (e: Exception) {
+            ResultWrapper.Error(exception = e, message = e.message)
         }
-
-        assetDao.insertAssets(mergedAssets)
     }
 
-
-    override suspend fun updateAssetFavoriteState(assetCode: String): Boolean {
-        val asset = assetDao.getAssetByCode(assetCode)
-        assetDao.updateAssetFavoriteState(assetCode, isFavorite = asset.isFavorite.not())
-        return asset.isFavorite.not()
+    override suspend fun updateAssetFavoriteState(assetCode: String): ResultWrapper<Boolean> {
+        return try {
+            val asset = assetDao.getAssetByCode(assetCode)
+            val newFavoriteState = asset.isFavorite.not()
+            assetDao.updateAssetFavoriteState(assetCode, isFavorite = newFavoriteState)
+            ResultWrapper.Success(newFavoriteState)
+        } catch (e: Exception) {
+            ResultWrapper.Error(exception = e, message = e.message)
+        }
     }
 
-    override fun observeAvailableAssets(): Flow<List<AssetModel>> {
-        return assetDao.getAllAssets()
-            .map { entities ->
-                entities
-                    .map(transform = assetMapper::entityToDomainModel)
-                    .sortedByDescending { it.isFavorite }
-            }.catch { Timber.e(t = it) }
+    override fun observeAvailableAssets(): Flow<ResultWrapper<List<AssetModel>>> {
+        return flow {
+            emit(value = ResultWrapper.Loading)
+            assetDao.getAllAssets()
+                .map { entities ->
+                    entities
+                        .map(transform = assetMapper::entityToDomainModel)
+                        .sortedByDescending { it.isFavorite }
+                }
+                .collect { assets ->
+                    emit(ResultWrapper.Success(assets))
+                }
+        }.catch { e ->
+            emit(ResultWrapper.Error(exception = e, message = e.message))
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun streamConvertedAmounts(
         baseCode: String,
         inputAmount: Double
-    ): Flow<List<AssetConvertedAmount>> {
+    ): Flow<ResultWrapper<List<AssetConvertedAmount>>> {
         return observeAvailableAssets()
-            .flatMapLatest { assets ->
-                mockConversionService.streamConvertedRates(
-                    assets = assets,
-                    baseCode = baseCode,
-                    inputAmount = inputAmount
-                )
-            }.catch { Timber.e(t = it) }
+            .flatMapLatest { assetsResult ->
+                when (assetsResult) {
+                    is ResultWrapper.Loading -> {
+                        flow {
+                            emit(ResultWrapper.Loading)
+                        }
+                    }
+
+                    is ResultWrapper.Success -> {
+                        mockConversionService.streamConvertedRates(
+                            assets = assetsResult.data,
+                            baseCode = baseCode,
+                            inputAmount = inputAmount
+                        )
+                            .map<List<AssetConvertedAmount>, ResultWrapper<List<AssetConvertedAmount>>> { convertedAmounts ->
+                                ResultWrapper.Success(data = convertedAmounts)
+                            }
+                            .catch { e ->
+                                emit(ResultWrapper.Error(exception = e, message = e.message))
+                            }
+                    }
+
+                    is ResultWrapper.Error -> {
+                        flow {
+                            emit(
+                                ResultWrapper.Error(
+                                    exception = assetsResult.exception,
+                                    message = assetsResult.message
+                                )
+                            )
+                        }
+                    }
+                }
+            }.onStart {
+                emit(ResultWrapper.Loading)
+            }.catch { ex ->
+                emit(ResultWrapper.Error(exception = ex, message = ex.message))
+            }
     }
 }
